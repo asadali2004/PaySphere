@@ -6,7 +6,16 @@ using System.Threading.Tasks;
 
 namespace PaySphere.BuildingBlocks.Constants
 {
-    internal class ErrorMessages
+    public static class ErrorMessages
     {
+        public const string UserNotFound = "User not found.";
+
+        public const string WalletNotFound = "Wallet not found.";
+
+        public const string InvalidCredentials = "Invalid email or password.";
+
+        public const string InsufficientBalance = "Insufficient wallet balance.";
+
+        public const string DuplicateUser = "User already exists.";
     }
 }

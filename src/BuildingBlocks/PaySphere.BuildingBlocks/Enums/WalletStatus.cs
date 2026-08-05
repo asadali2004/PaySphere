@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace PaySphere.BuildingBlocks.Enums
 {
-    internal class WalletStatus
+    public enum WalletStatus
     {
+        Active = 1,
+        Inactive = 2
     }
 }

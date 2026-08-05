@@ -13,13 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Base\" />
-    <Folder Include="Enums\" />
-    <Folder Include="Exceptions\" />
-    <Folder Include="Constants\" />
     <Folder Include="Extensions\" />
-    <Folder Include="Pagination\" />
-    <Folder Include="Responses\" />
   </ItemGroup>
 
 </Project>

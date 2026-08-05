@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace PaySphere.BuildingBlocks.Exceptions
 {
-    internal class BaseException
+    public class BaseException : Exception
     {
+        public BaseException(string message)
+            : base(message)
+        {
+        }
     }
 }

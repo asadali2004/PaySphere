@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace PaySphere.BuildingBlocks.Enums
 {
-    internal class RoleType
+    public enum RoleType
     {
+        Admin = 1,
+        User = 2
     }
 }
