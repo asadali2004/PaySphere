@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MMLib.SwaggerForOcelot" Version="8.3.1" />
+    <PackageReference Include="Ocelot" Version="23.3.6" />
+    <PackageReference Include="Ocelot.Provider.Polly" Version="23.3.6" />
+  </ItemGroup>
+
 </Project>
