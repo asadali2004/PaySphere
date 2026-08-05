@@ -1,8 +1,0 @@
-<Solution>
-  <Project Path="../../tests/PaySphere.AuthService.Tests/PaySphere.AuthService.Tests.csproj" />
-  <Project Path="../../tests/PaySphere.WalletService.Tests/PaySphere.WalletService.Tests.csproj" />
-  <Project Path="../BuildingBlocks/PaySphere.BuildingBlocks/PaySphere.BuildingBlocks.csproj" />
-  <Project Path="../Gateway/PaySphere.ApiGateway/PaySphere.ApiGateway.csproj" />
-  <Project Path="../Services/PaySphere.AuthService/PaySphere.AuthService.csproj" />
-  <Project Path="../Services/PaySphere.WalletService/PaySphere.WalletService.csproj" />
-</Solution>

@@ -18,6 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\BuildingBlocks\PaySphere.BuildingBlocks\PaySphere.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\..\src\Services\PaySphere.WalletService\PaySphere.WalletService.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 

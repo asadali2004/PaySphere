@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/BuildingBlocks/">
+    <Project Path="../src/BuildingBlocks/PaySphere.BuildingBlocks/PaySphere.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/Gateway/">
+    <Project Path="../src/Gateway/PaySphere.ApiGateway/PaySphere.ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/Services/">
+    <Project Path="../src/Services/PaySphere.AuthService/PaySphere.AuthService.csproj" />
+    <Project Path="../src/Services/PaySphere.WalletService/PaySphere.WalletService.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="../tests/PaySphere.AuthService.Tests/PaySphere.AuthService.Tests.csproj" />
+    <Project Path="../tests/PaySphere.WalletService.Tests/PaySphere.WalletService.Tests.csproj" />
+  </Folder>
+</Solution>
