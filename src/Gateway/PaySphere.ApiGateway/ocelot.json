@@ -1,6 +1,9 @@
-﻿namespace PaySphere.ApiGateway
-{
-    public class ocelot
-    {
-    }
+﻿{
+  "Routes": [
+
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "https://localhost:7000"
+  }
 }
