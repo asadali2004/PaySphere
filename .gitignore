@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+.vscode/
+
+*.user
+*.suo
+
+logs/
+
+TestResults/
+
+*.dbmdl
+
+appsettings.Development.json

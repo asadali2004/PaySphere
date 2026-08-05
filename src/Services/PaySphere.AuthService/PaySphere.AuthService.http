@@ -1,0 +1,6 @@
+@PaySphere.AuthService_HostAddress = http://localhost:5025
+
+GET {{PaySphere.AuthService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
