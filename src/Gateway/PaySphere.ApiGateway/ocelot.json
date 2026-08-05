@@ -1,0 +1,6 @@
+﻿namespace PaySphere.ApiGateway
+{
+    public class ocelot
+    {
+    }
+}
