@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PaySphere.AuthService.Entities;
+using PaySphere.AuthService.Helpers;
 using PaySphere.BuildingBlocks.Constants;
 
 namespace PaySphere.AuthService.Data.Seed;
@@ -13,26 +14,50 @@ public static class DataSeeder
 
         await dbContext.Database.MigrateAsync();
 
-        if (await dbContext.Roles.AnyAsync())
+        if (!await dbContext.Roles.AnyAsync())
+        {
+            var now = DateTime.UtcNow;
+
+            dbContext.Roles.AddRange(
+                new Role
+                {
+                    Name = ApplicationConstants.AdminRole,
+                    Description = "Administrator role",
+                    CreatedAt = now
+                },
+                new Role
+                {
+                    Name = ApplicationConstants.UserRole,
+                    Description = "Standard user role",
+                    CreatedAt = now
+                });
+
+            await dbContext.SaveChangesAsync();
+        }
+
+        var adminRole = await dbContext.Roles.FirstOrDefaultAsync(x => x.Name == ApplicationConstants.AdminRole);
+        if (adminRole is null)
         {
             return;
         }
 
-        var now = DateTime.UtcNow;
+        var adminEmail = "admin@paysphere.com";
 
-        dbContext.Roles.AddRange(
-            new Role
-            {
-                Name = ApplicationConstants.AdminRole,
-                Description = "Administrator role",
-                CreatedAt = now
-            },
-            new Role
-            {
-                Name = ApplicationConstants.UserRole,
-                Description = "Standard user role",
-                CreatedAt = now
-            });
+        if (await dbContext.Users.AnyAsync(x => x.Email == adminEmail))
+        {
+            return;
+        }
+
+        dbContext.Users.Add(new User
+        {
+            FullName = "System Administrator",
+            Email = adminEmail,
+            PasswordHash = PasswordHasher.HashPassword("Admin@123"),
+            PhoneNumber = "9999999999",
+            RoleId = adminRole.Id,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        });
 
         await dbContext.SaveChangesAsync();
     }

@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSerilogConfiguration(builder.Configuration)
     .AddJwtAuthentication(builder.Configuration)
     .AddDatabase(builder.Configuration)
+    .AddRepositories()
     .AddSwaggerDocumentation();
 
 builder.Services.AddControllers();

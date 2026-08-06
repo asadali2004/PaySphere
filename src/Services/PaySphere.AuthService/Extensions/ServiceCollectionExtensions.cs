@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PaySphere.AuthService.Configurations;
 using PaySphere.AuthService.Data;
+using PaySphere.AuthService.Repositories;
+using PaySphere.AuthService.Repositories.Interfaces;
 using Serilog;
 using System.Text;
 
@@ -70,6 +72,15 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContext<PaySphereAuthDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        return services;
+    }
+
+    public static IServiceCollection AddRepositories(this IServiceCollection services)
+    {
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
 
         return services;
     }
