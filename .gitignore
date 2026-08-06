@@ -13,3 +13,6 @@ TestResults/
 *.dbmdl
 
 appsettings.Development.json
+*.err.log
+*.out.log
+logs/

@@ -27,22 +27,4 @@
     <ProjectReference Include="..\..\BuildingBlocks\PaySphere.BuildingBlocks\PaySphere.BuildingBlocks.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Data\Configurations\" />
-    <Folder Include="Data\Seed\" />
-    <Folder Include="DTOs\Responses\" />
-    <Folder Include="DTOs\Requests\" />
-    <Folder Include="Entities\" />
-    <Folder Include="Middleware\" />
-    <Folder Include="Exceptions\" />
-    <Folder Include="Helpers\" />
-    <Folder Include="Mappings\" />
-    <Folder Include="Configurations\" />
-    <Folder Include="Constants\" />
-    <Folder Include="Validators\" />
-    <Folder Include="Repositories\Interfaces\" />
-    <Folder Include="Services\Interfaces\" />
-  </ItemGroup>
-
 </Project>
