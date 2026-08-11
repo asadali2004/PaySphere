@@ -1,14 +1,18 @@
 using PaySphere.AuthService.Data.Seed;
 using PaySphere.AuthService.Extensions;
 using Serilog;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSerilogConfiguration(builder.Configuration)
     .AddJwtAuthentication(builder.Configuration)
     .AddDatabase(builder.Configuration)
     .AddRepositories()
+    .AddApplicationServices()
     .AddSwaggerDocumentation();
+
+// Application services
+builder.Services.AddScoped<PaySphere.AuthService.Services.Interfaces.IJwtTokenService, PaySphere.AuthService.Services.JwtTokenService>();
+builder.Services.AddScoped<PaySphere.AuthService.Services.Interfaces.IAuthService, PaySphere.AuthService.Services.AuthService>();
 
 builder.Services.AddControllers();
 
