@@ -2,6 +2,8 @@
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PaySphere.WalletService.Configurations;
+using PaySphere.WalletService.Services;
+using PaySphere.WalletService.Services.Interfaces;
 using Serilog;
 using System.Text;
 
@@ -26,7 +28,6 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // JWT Options
         services.Configure<JwtOptions>(
             configuration.GetSection(JwtOptions.SectionName));
 
@@ -60,6 +61,20 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddExternalClients(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var authServiceOptions = configuration.GetSection(AuthServiceOptions.SectionName).Get<AuthServiceOptions>() ?? new AuthServiceOptions();
+
+        services.AddHttpClient<IAuthServiceClient, AuthServiceClient>(client =>
+        {
+            client.BaseAddress = new Uri(authServiceOptions.BaseUrl);
+        });
+
+        return services;
+    }
+
     public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
@@ -72,7 +87,6 @@ public static class ServiceCollectionExtensions
                 Version = "v1"
             });
 
-            // JWT Bearer security definition
             var securityScheme = new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -90,7 +104,6 @@ public static class ServiceCollectionExtensions
 
             options.AddSecurityDefinition("Bearer", securityScheme);
 
-            // Require Bearer token for all endpoints by default
             var securityRequirement = new OpenApiSecurityRequirement
             {
                 { securityScheme, new string[] { } }

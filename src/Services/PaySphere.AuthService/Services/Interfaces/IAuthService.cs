@@ -12,4 +12,6 @@ public interface IAuthService
     Task<UserResponse> GetProfileAsync(int userId);
 
     Task ChangePasswordAsync(int userId, ChangePasswordRequest request);
+
+    Task<InternalUserValidationResponse> GetInternalUserValidationAsync(int userId);
 }

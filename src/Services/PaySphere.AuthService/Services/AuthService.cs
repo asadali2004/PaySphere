@@ -122,4 +122,16 @@ public class AuthService : IAuthService
         _userRepoGeneric.Update(user);
         await _userRepoGeneric.SaveChangesAsync();
     }
+
+    public async Task<InternalUserValidationResponse> GetInternalUserValidationAsync(int userId)
+    {
+        var user = await _userRepoGeneric.GetByIdAsync(userId);
+
+        return new InternalUserValidationResponse
+        {
+            UserId = userId,
+            Exists = user is not null,
+            IsActive = user?.IsActive ?? false
+        };
+    }
 }
