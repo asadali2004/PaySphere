@@ -8,6 +8,7 @@ using PaySphere.AuthService.Repositories;
 using PaySphere.AuthService.Repositories.Interfaces;
 using Serilog;
 using System.Text;
+using System.IO;
 
 namespace PaySphere.AuthService.Extensions;
 
@@ -17,8 +18,17 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var logDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "logs");
+
+        Directory.CreateDirectory(logDirectory);
+
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
+            .WriteTo.File(
+                Path.Combine(logDirectory, "auth-service-.txt"),
+                rollingInterval: RollingInterval.Day)
             .CreateLogger();
 
         services.AddSerilog();

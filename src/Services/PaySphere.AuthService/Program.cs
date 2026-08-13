@@ -38,4 +38,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Health endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+
 app.Run();

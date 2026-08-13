@@ -19,6 +19,8 @@ public class WalletController : ControllerBase
         _walletService = walletService;
     }
 
+    // Controller methods are intentionally thin and simply forward authenticated user context to
+    // the WalletService which contains the core business rules (validation, transactions, repository calls).
     [HttpPost]
     public async Task<IActionResult> CreateWallet()
     {
@@ -74,10 +76,17 @@ public class WalletController : ControllerBase
     }
 
     [HttpGet("transactions")]
-    public async Task<IActionResult> GetTransactions([FromQuery] PaginationRequest request)
+    public async Task<IActionResult> GetTransactions(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string? search = null,
+        [FromQuery] string? type = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] string sortBy = "createdAt",
+        [FromQuery] string sortOrder = "desc")
     {
         var userId = GetUserId();
-        var transactions = await _walletService.GetTransactionsAsync(userId, request);
+        var transactions = await _walletService.GetTransactionsAsync(userId, request, search, type, dateFrom, dateTo, sortBy, sortOrder);
 
         return Ok(transactions);
     }

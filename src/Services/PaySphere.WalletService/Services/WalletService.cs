@@ -194,7 +194,15 @@ public class WalletService : IWalletService
         return MapToResponse(senderWallet);
     }
 
-    public async Task<PagedResponse<TransactionResponse>> GetTransactionsAsync(int userId, PaginationRequest request)
+    public async Task<PagedResponse<TransactionResponse>> GetTransactionsAsync(
+        int userId,
+        PaginationRequest request,
+        string? search = null,
+        string? type = null,
+        DateTime? dateFrom = null,
+        DateTime? dateTo = null,
+        string sortBy = "createdAt",
+        string sortOrder = "desc")
     {
         var wallet = await _walletRepository.GetByUserIdAsync(userId);
 
@@ -203,14 +211,27 @@ public class WalletService : IWalletService
             throw new WalletNotFoundException();
         }
 
-        var transactions = (await _transactionRepository.GetByWalletIdAsync(wallet.Id)).ToList();
-        var totalRecords = transactions.Count;
+        // parse type if provided
+        int? typeValue = null;
+        if (!string.IsNullOrWhiteSpace(type) && Enum.TryParse(type, true, out PaySphere.BuildingBlocks.Enums.TransactionType parsedType))
+        {
+            typeValue = (int)parsedType;
+        }
+
+        // Use repository LINQ-based method
+        var (transactions, totalRecords) = await _transactionRepository.GetByWalletIdWithFiltersAsync(
+            wallet.Id,
+            search,
+            typeValue,
+            dateFrom,
+            dateTo,
+            sortBy,
+            sortOrder,
+            request.PageNumber,
+            request.PageSize);
+
+        var page = transactions.Select(MapToTransactionResponse).ToList();
         var totalPages = (int)Math.Ceiling(totalRecords / (double)request.PageSize);
-        var page = transactions
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Select(MapToTransactionResponse)
-            .ToList();
 
         return new PagedResponse<TransactionResponse>
         {

@@ -1,15 +1,57 @@
-namespace PaySphere.ApiGateway
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
+
+namespace PaySphere.ApiGateway;
+
+public class Program
 {
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Configuration.AddJsonFile(
+            "ocelot.json",
+            optional: false,
+            reloadOnChange: true);
+
+        builder.Services.AddOcelot(builder.Configuration);
+        builder.Services.AddSwaggerForOcelot(builder.Configuration);
+
+        var app = builder.Build();
+
+        app.UseRouting();
+
+        // Gateway's own endpoints must be handled before Ocelot
+        app.Use(async (context, next) =>
         {
-            var builder = WebApplication.CreateBuilder(args);
-            var app = builder.Build();
+            if (context.Request.Path == "/health")
+            {
+                await context.Response.WriteAsJsonAsync(
+                    new { status = "Healthy" });
 
-            app.MapGet("/", () => "Hello World!");
+                return;
+            }
 
-            app.Run();
-        }
+            if (context.Request.Path == "/")
+            {
+                await context.Response.WriteAsync(
+                    "PaySphere API Gateway");
+
+                return;
+            }
+
+            await next();
+        });
+
+        // Aggregated Swagger
+        app.UseSwaggerForOcelotUI(options =>
+        {
+            options.PathToSwaggerGenerator = "/swagger/docs";
+        });
+
+        // Ocelot must be last
+        await app.UseOcelot();
+
+        app.Run();
     }
 }

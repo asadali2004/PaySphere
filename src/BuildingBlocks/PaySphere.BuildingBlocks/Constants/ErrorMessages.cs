@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace PaySphere.BuildingBlocks.Constants
 {
+    /// <summary>
+    /// Centralized error message constants to ensure controllers and services return
+    /// consistent messages for common business errors (used in exception handling branches).
+    /// </summary>
     public static class ErrorMessages
     {
         public const string UserNotFound = "User not found.";

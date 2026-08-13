@@ -6,6 +6,10 @@ using PaySphere.WalletService.Services.Interfaces;
 
 namespace PaySphere.WalletService.Services;
 
+/// <summary>
+/// HTTP client used to call AuthService for lightweight receiver validation.
+/// WalletService delegates user-related validation to AuthService to keep services decoupled and authoritative.
+/// </summary>
 public class AuthServiceClient : IAuthServiceClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

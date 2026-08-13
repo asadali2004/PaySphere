@@ -21,6 +21,9 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    // Controllers are intentionally thin: they validate and adapt HTTP requests/responses
+    // and delegate business rules to services. This keeps routing, model binding and HTTP
+    // concerns separate from domain logic and makes the services easier to unit test.
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)

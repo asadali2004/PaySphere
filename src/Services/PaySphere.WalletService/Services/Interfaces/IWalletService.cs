@@ -19,5 +19,13 @@ public interface IWalletService
 
     Task<WalletResponse> TransferAsync(int senderUserId, TransferRequest request);
 
-    Task<PagedResponse<TransactionResponse>> GetTransactionsAsync(int userId, PaginationRequest request);
+    Task<PagedResponse<TransactionResponse>> GetTransactionsAsync(
+        int userId,
+        PaginationRequest request,
+        string? search = null,
+        string? type = null,
+        DateTime? dateFrom = null,
+        DateTime? dateTo = null,
+        string sortBy = "createdAt",
+        string sortOrder = "desc");
 }

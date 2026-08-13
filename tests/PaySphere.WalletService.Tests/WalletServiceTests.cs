@@ -553,7 +553,22 @@ public class WalletServiceTests
         };
 
         _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-        _transactionRepositoryMock.Setup(x => x.GetByWalletIdAsync(wallet.Id)).ReturnsAsync(transactions);
+        _transactionRepositoryMock.Setup(x => x.GetByWalletIdWithFiltersAsync(
+            wallet.Id,
+            It.IsAny<string?>(),
+            It.IsAny<int?>(),
+            It.IsAny<DateTime?>(),
+            It.IsAny<DateTime?>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<int>()))
+            .ReturnsAsync((int wid, string? s, int? t, DateTime? df, DateTime? dt, string sb, string so, int pn, int ps) =>
+            {
+                var total = transactions.Count;
+                var page = transactions.Skip((pn - 1) * ps).Take(ps);
+                return (page, total);
+            });
 
         var result = await _walletService.GetTransactionsAsync(userId, new PaginationRequest
         {

@@ -6,6 +6,7 @@ using PaySphere.WalletService.Services;
 using PaySphere.WalletService.Services.Interfaces;
 using Serilog;
 using System.Text;
+using System.IO;
 
 namespace PaySphere.WalletService.Extensions;
 
@@ -15,8 +16,17 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var logDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "logs");
+
+        Directory.CreateDirectory(logDirectory);
+
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
+            .WriteTo.File(
+                Path.Combine(logDirectory, "wallet-service-.txt"),
+                rollingInterval: RollingInterval.Day)
             .CreateLogger();
 
         services.AddSerilog();

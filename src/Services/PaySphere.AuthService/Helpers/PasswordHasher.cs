@@ -3,6 +3,11 @@ using PaySphere.AuthService.Entities;
 
 namespace PaySphere.AuthService.Helpers;
 
+/// <summary>
+/// Thin wrapper around ASP.NET Core's PasswordHasher to centralize password hashing.
+/// Using Identity's proven hashing ensures secure, salted hashes and simplifies verification.
+/// The helper intentionally accepts plain strings and returns/compares hashes only; raw passwords are never stored.
+/// </summary>
 public static class PasswordHasher
 {
     public static string HashPassword(string password)

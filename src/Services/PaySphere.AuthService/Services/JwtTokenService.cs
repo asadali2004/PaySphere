@@ -18,6 +18,13 @@ internal class JwtTokenService : IJwtTokenService
         _options = options.Value;
     }
 
+    /// <summary>
+    /// Generates a signed JWT containing minimal claims required by other services:
+    /// - NameIdentifier contains the authenticated user's Id so services can authorize actions.
+    /// - Name and Email are included for convenience in logs or simple UI displays.
+    /// - Role claim is optional and used for authorization policies.
+    /// The token is signed with a symmetric key configured in JwtOptions.
+    /// </summary>
     public (string Token, DateTime ExpiresAt) GenerateToken(User user, string roleName)
     {
         var expiresAt = DateTime.UtcNow.AddMinutes(_options.ExpiryInMinutes);
