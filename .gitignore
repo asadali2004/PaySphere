@@ -16,3 +16,7 @@ appsettings.Development.json
 *.err.log
 *.out.log
 logs/
+# Visual Studio temporary/backup files
+*.tmp
+*.bak
+*.backup
