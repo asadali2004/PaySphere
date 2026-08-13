@@ -263,7 +263,7 @@ GET    /health                               — Health check
 ```
 GET    /                                     — Gateway welcome message
 GET    /health                               — Gateway health check
-GET    /swagger/ui                           — Aggregated Swagger UI (auth + wallet)
+GET    /swagger                              — Aggregated Swagger UI (auth + wallet)
 ```
 
 All `/api/v1/*` routes are proxied to appropriate downstream service.
@@ -463,7 +463,7 @@ dotnet test
 
 At startup:
 - AuthService applies migrations and seeds default roles + admin user
-- Serilog writes logs to console and `logs/auth-service-*.txt`, `logs/wallet-service-*.txt`
+- Serilog writes logs to console and `src\Services\PaySphere.AuthService\bin\Debug\net8.0\logs\`, `src\Services\PaySphere.WalletService\bin\Debug\net8.0\logs\`
 
 ## Health Checks
 
@@ -489,13 +489,13 @@ GET https://localhost:7261/health
 
 **Aggregated Swagger UI** (via gateway):
 ```
-https://localhost:7265/swagger/ui
+https://localhost:7265/swagger
 ```
 Displays combined documentation for AuthService and WalletService.
 
 **Individual service Swagger**:
-- AuthService: https://localhost:7213/swagger/ui
-- WalletService: https://localhost:7261/swagger/ui
+- AuthService: https://localhost:7213/swagger
+- WalletService: https://localhost:7261/swagger
 
 ## Security Considerations
 
@@ -587,4 +587,4 @@ Contributions welcome! Please:
 ---
 
 **Last updated**: 2026-08-13  
-**Status**: Production-ready
+**Status**: Completed backend project
