@@ -560,15 +560,11 @@ Contributions welcome! Please:
 3. Commit with clear messages
 4. Submit a pull request with description
 
-## License
-
-MIT License — see LICENSE file
-
 ## Author
 
 **Asad Ali**  
 [GitHub](https://github.com/asadali2004)  
-[Email](mailto:your-email@example.com)
+[Email](mailto:aliasad07518@gmail.com)
 
 ---
 
