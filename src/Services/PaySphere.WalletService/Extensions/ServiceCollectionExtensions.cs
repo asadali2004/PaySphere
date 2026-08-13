@@ -16,9 +16,9 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var logDirectory = Path.Combine(
+        var logDirectory = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
-            "logs");
+            "..", "..", "..", "logs"));
 
         Directory.CreateDirectory(logDirectory);
 
