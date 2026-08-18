@@ -4,6 +4,10 @@ using PaySphere.WalletService.Entities;
 
 namespace PaySphere.WalletService.Data.Configurations;
 
+/// <summary>
+/// EF Core configuration for Transaction entity. Ensures currency fields use
+/// decimal(18,2), configures indexes and length limits for reference and description.
+/// </summary>
 public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 {
     public void Configure(EntityTypeBuilder<Transaction> builder)

@@ -3,6 +3,9 @@ using Ocelot.Middleware;
 
 namespace PaySphere.ApiGateway;
 
+// API Gateway using Ocelot to route incoming client requests to downstream services.
+// Responsibilities include forwarding Authorization headers, aggregating Swagger
+// documentation and providing a basic health endpoint used by orchestration.
 public class Program
 {
     public static async Task Main(string[] args)

@@ -7,6 +7,9 @@ using PaySphere.WalletService.Services;
 using PaySphere.WalletService.Services.Interfaces;
 using Serilog;
 
+// Program bootstrap for WalletService. Configures logging, authentication, EF Core
+// database context, external HTTP clients, repositories and application services.
+// Program remains minimal; most configuration is implemented via extension methods.
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSerilogConfiguration(builder.Configuration)
@@ -42,7 +45,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 
-// Health endpoint
+// Lightweight health endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
 app.Run();

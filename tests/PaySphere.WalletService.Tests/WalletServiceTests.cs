@@ -17,6 +17,11 @@ using WalletServiceImpl = PaySphere.WalletService.Services.WalletService;
 
 namespace PaySphere.WalletService.Tests;
 
+/// <summary>
+/// Unit tests for WalletService business rules including wallet creation,
+/// balance operations, top-up/withdrawal and transfer flows. Tests use an
+/// in-memory Sqlite database and Moq for repository and external client dependencies.
+/// </summary>
 public class WalletServiceTests
 {
     private SqliteConnection _connection = null!;

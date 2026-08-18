@@ -5,6 +5,10 @@ using PaySphere.WalletService.Repositories.Interfaces;
 
 namespace PaySphere.WalletService.Repositories;
 
+/// <summary>
+/// Concrete repository implementing wallet persistence using EF Core.
+/// Keep data access code here; business rules belong to services.
+/// </summary>
 public class WalletRepository : IWalletRepository
 {
     private readonly WalletDbContext _context;

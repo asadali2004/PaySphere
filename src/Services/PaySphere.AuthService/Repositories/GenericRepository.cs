@@ -7,6 +7,11 @@ namespace PaySphere.AuthService.Repositories;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
 {
+    /// <summary>
+    /// Generic EF Core repository implementation providing basic CRUD operations.
+    /// Concrete repositories can inherit this to reuse common data-access logic.
+    /// Repositories should avoid implementing business rules.
+    /// </summary>
     protected readonly PaySphereAuthDbContext Context;
     protected readonly DbSet<T> DbSet;
 

@@ -7,6 +7,10 @@ namespace PaySphere.AuthService.Repositories;
 
 public class UserRepository : GenericRepository<User>, IUserRepository
 {
+    /// <summary>
+    /// Concrete repository for User entities. Provides user-specific queries such as
+    /// lookups by email, phone existence checks and eager-loading of role details.
+    /// </summary>
     private readonly PaySphereAuthDbContext _context;
 
     public UserRepository(PaySphereAuthDbContext context)

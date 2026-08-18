@@ -4,6 +4,11 @@ using PaySphere.AuthService.Entities;
 
 namespace PaySphere.AuthService.Data.Configurations;
 
+/// <summary>
+/// EF Core configuration for Role entity. Configures table mapping, length limits
+/// and the relationship with User entities. Uses Restrict delete behavior to avoid
+/// accidentally deleting users when roles are removed.
+/// </summary>
 public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
     public void Configure(EntityTypeBuilder<Role> builder)

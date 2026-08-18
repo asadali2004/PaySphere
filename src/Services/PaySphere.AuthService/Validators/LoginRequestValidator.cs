@@ -4,6 +4,10 @@ using PaySphere.AuthService.DTOs.Requests;
 
 namespace PaySphere.AuthService.Validators;
 
+/// <summary>
+/// Validates LoginRequest DTOs and throws <see cref="PaySphere.BuildingBlocks.Exceptions.BaseException"/>
+/// for invalid payloads. Keeps simple validation logic separate from services.
+/// </summary>
 internal static class LoginRequestValidator
 {
     private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);

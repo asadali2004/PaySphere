@@ -3,6 +3,10 @@ using PaySphere.AuthService.DTOs.Requests;
 
 namespace PaySphere.AuthService.Validators;
 
+/// <summary>
+/// Validates ChangePasswordRequest DTOs and raises <see cref="PaySphere.BuildingBlocks.Exceptions.BaseException"/>
+/// when validation fails. This keeps simple guard checks out of service code.
+/// </summary>
 internal static class ChangePasswordRequestValidator
 {
     public static void Validate(ChangePasswordRequest request)

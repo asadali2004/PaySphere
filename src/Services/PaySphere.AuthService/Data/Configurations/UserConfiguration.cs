@@ -4,6 +4,11 @@ using PaySphere.AuthService.Entities;
 
 namespace PaySphere.AuthService.Data.Configurations;
 
+/// <summary>
+/// EF Core configuration for the User entity. Configures uniqueness of email,
+/// password hash storage limits and the relationship to Role. PasswordHash is
+/// stored securely and never exposed by API DTOs.
+/// </summary>
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)

@@ -7,6 +7,10 @@ namespace PaySphere.AuthService.Repositories;
 
 public class RoleRepository : GenericRepository<Role>, IRoleRepository
 {
+    /// <summary>
+    /// Concrete repository for Role entities. Inherits common behavior from GenericRepository
+    /// and exposes role-specific queries used by authentication services.
+    /// </summary>
     public RoleRepository(PaySphereAuthDbContext context)
         : base(context)
     {

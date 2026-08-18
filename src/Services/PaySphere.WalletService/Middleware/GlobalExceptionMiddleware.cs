@@ -6,6 +6,11 @@ using PaySphere.WalletService.Exceptions;
 
 namespace PaySphere.WalletService.Middleware;
 
+/// <summary>
+/// Global exception handling middleware for WalletService. Converts known
+/// business exceptions into meaningful HTTP responses and wraps unexpected
+/// errors in a standard ApiResponse shape for clients.
+/// </summary>
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -17,6 +22,9 @@ public class GlobalExceptionMiddleware
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes the next middleware and intercepts exceptions to return a JSON error response.
+    /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
         try

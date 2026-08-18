@@ -5,8 +5,17 @@ using Microsoft.Extensions.Logging;
 using PaySphere.BuildingBlocks.Exceptions;
 using PaySphere.BuildingBlocks.Responses;
 
+// Centralized exception handling middleware for the AuthService. It converts
+// exceptions thrown by downstream middleware and controllers into consistent
+// ApiResponse objects and appropriate HTTP status codes.
 namespace PaySphere.AuthService.Middleware;
 
+/// <summary>
+/// Middleware that catches unhandled exceptions, logs them, and returns a
+/// standardized JSON error response. Business exceptions deriving from
+/// <see cref="PaySphere.BuildingBlocks.Exceptions.BaseException"/> are treated
+/// as client errors (400 Bad Request).
+/// </summary>
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -20,6 +29,11 @@ public class GlobalExceptionMiddleware
         _logger = logger;
     }
 
+    /// <summary>
+    /// Invokes the middleware pipeline and intercepts exceptions to produce a
+    /// standardized JSON error response.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         try

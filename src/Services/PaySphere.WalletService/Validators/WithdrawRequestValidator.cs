@@ -3,6 +3,10 @@ using PaySphere.WalletService.Exceptions;
 
 namespace PaySphere.WalletService.Validators;
 
+/// <summary>
+/// Validates WithdrawRequest payloads and throws <see cref="PaySphere.WalletService.Exceptions.InvalidTransactionAmountException"/>
+/// when amounts are invalid. Ensures positive amounts with two decimal places.
+/// </summary>
 internal static class WithdrawRequestValidator
 {
     public static void Validate(WithdrawRequest request)

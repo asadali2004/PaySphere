@@ -5,11 +5,18 @@ using PaySphere.BuildingBlocks.Pagination;
 using PaySphere.WalletService.DTOs.Requests;
 using PaySphere.WalletService.Services.Interfaces;
 
+// Handles wallet HTTP endpoints (create, balance, top-up, withdraw, transfer,
+// transaction history). The controller is thin and delegates business rules to
+// IWalletService which manages validation, transactions and repository operations.
 namespace PaySphere.WalletService.Controllers;
 
 [ApiController]
 [Route("api/v1/wallets")]
 [Authorize]
+/// <summary>
+/// Controller exposing wallet-related endpoints for the authenticated user.
+/// All operations use the authenticated user's id from the JWT claim.
+/// </summary>
 public class WalletController : ControllerBase
 {
     private readonly IWalletService _walletService;

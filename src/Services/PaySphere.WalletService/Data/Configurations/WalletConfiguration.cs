@@ -4,6 +4,10 @@ using PaySphere.WalletService.Entities;
 
 namespace PaySphere.WalletService.Data.Configurations;
 
+/// <summary>
+/// EF Core configuration for the Wallet entity. Configures table mapping,
+/// column types (notably decimal(18,2) for currency), indexes and relationships.
+/// </summary>
 public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
 {
     public void Configure(EntityTypeBuilder<Wallet> builder)

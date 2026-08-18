@@ -8,10 +8,18 @@ using PaySphere.BuildingBlocks.Responses;
 using PaySphere.BuildingBlocks.Constants;
 using PaySphere.BuildingBlocks.Exceptions;
 
+// Handles authentication HTTP endpoints (register, login, profile, change-password).
+// Controllers are intentionally thin: they perform HTTP concerns and delegate
+// business rules to services (IAuthService). This file contains only request
+// routing and response adaptation.
 namespace PaySphere.AuthService.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
+/// <summary>
+/// Exposes authentication and user profile endpoints. Delegates core logic to
+/// <see cref="PaySphere.AuthService.Services.Interfaces.IAuthService"/>.
+/// </summary>
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -24,6 +32,15 @@ public class AuthController : ControllerBase
     // Controllers are intentionally thin: they validate and adapt HTTP requests/responses
     // and delegate business rules to services. This keeps routing, model binding and HTTP
     // concerns separate from domain logic and makes the services easier to unit test.
+    /// <summary>
+    /// Registers a new user using the provided registration data. Returns the
+    /// created user data in a standardized <see cref="PaySphere.BuildingBlocks.Responses.ApiResponse{T}"/>.
+    /// Controllers map HTTP concerns and translate service exceptions into proper
+    /// HTTP response codes.
+    /// </summary>
+    /// <param name="request">Registration details (email, password, role, etc.).</param>
+    /// <returns>201 Created with the created user response on success; appropriate
+    /// error responses otherwise.</returns>
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -68,6 +85,12 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Authenticates a user and returns a JWT along with basic user information.
+    /// On invalid credentials, returns 401 Unauthorized.
+    /// </summary>
+    /// <param name="request">Login credentials.</param>
+    /// <returns>200 OK with login token and user info on success; 401 on invalid credentials.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -112,6 +135,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves the authenticated user's profile. Requires a valid JWT with a
+    /// NameIdentifier claim mapped to the integer user id.
+    /// </summary>
+    /// <returns>200 OK with user profile on success; 401 when the token or user is invalid.</returns>
     [HttpGet("profile")]
     [Authorize]
     public async Task<IActionResult> Profile()
@@ -171,6 +199,12 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Changes the authenticated user's password. Current password is validated
+    /// by the service. Returns 204 No Content on success.
+    /// </summary>
+    /// <param name="request">Contains current and new password details.</param>
+    /// <returns>204 No Content on success; 401 if current password is incorrect.</returns>
     [HttpPut("change-password")]
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)

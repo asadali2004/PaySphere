@@ -12,6 +12,11 @@ namespace PaySphere.WalletService.Repositories;
 
 public class TransactionRepository : ITransactionRepository
 {
+    /// <summary>
+    /// Concrete repository implementing transaction queries and storage. Provides
+    /// both LINQ-based queries and a stored-procedure alternative for retrieving
+    /// paginated transaction history. Repository encapsulates DB access details.
+    /// </summary>
     private readonly WalletDbContext _context;
 
     public TransactionRepository(WalletDbContext context)

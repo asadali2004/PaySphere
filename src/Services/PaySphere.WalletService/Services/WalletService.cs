@@ -14,6 +14,12 @@ using PaySphere.WalletService.Validators;
 
 namespace PaySphere.WalletService.Services;
 
+/// <summary>
+/// Implements wallet business rules: creation, balance queries, top-up,
+/// withdrawal and transfers. The service orchestrates validation, repository
+/// access, transaction recording and uses database transactions to ensure
+/// atomic operations for transfers.
+/// </summary>
 public class WalletService : IWalletService
 {
     private readonly IWalletRepository _walletRepository;
@@ -33,6 +39,12 @@ public class WalletService : IWalletService
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Creates a new wallet for the specified user. Throws <see cref="WalletAlreadyExistsException"/>
+    /// if the user already has a wallet.
+    /// </summary>
+    /// <param name="userId">The owner user's id from the authenticated principal.</param>
+    /// <returns>The created wallet representation.</returns>
     public async Task<WalletResponse> CreateWalletAsync(int userId)
     {
         if (await _walletRepository.ExistsByUserIdAsync(userId))
@@ -54,6 +66,11 @@ public class WalletService : IWalletService
         return MapToResponse(wallet);
     }
 
+    /// <summary>
+    /// Retrieves the wallet for the specified user and ensures it is active.
+    /// </summary>
+    /// <param name="userId">Owner user id.</param>
+    /// <returns>The wallet response.</returns>
     public async Task<WalletResponse> GetWalletAsync(int userId)
     {
         var wallet = await _walletRepository.GetByUserIdAsync(userId);
@@ -68,6 +85,11 @@ public class WalletService : IWalletService
         return MapToResponse(wallet);
     }
 
+    /// <summary>
+    /// Returns only the wallet balance for the specified user.
+    /// </summary>
+    /// <param name="userId">Owner user id.</param>
+    /// <returns>Wallet balance response.</returns>
     public async Task<WalletBalanceResponse> GetBalanceAsync(int userId)
     {
         var wallet = await _walletRepository.GetByUserIdAsync(userId);
@@ -85,6 +107,10 @@ public class WalletService : IWalletService
         };
     }
 
+    /// <summary>
+    /// Credits the user's wallet. Validation is delegated to request validators
+    /// and transaction recording is handled within the execution helper.
+    /// </summary>
     public Task<WalletResponse> TopUpAsync(int userId, TopUpRequest request)
     {
         TopUpRequestValidator.Validate(request);
@@ -97,6 +123,9 @@ public class WalletService : IWalletService
             (balance, amount) => balance + amount);
     }
 
+    /// <summary>
+    /// Debits the user's wallet after validation, ensuring sufficient balance.
+    /// </summary>
     public Task<WalletResponse> WithdrawAsync(int userId, WithdrawRequest request)
     {
         WithdrawRequestValidator.Validate(request);
@@ -110,6 +139,14 @@ public class WalletService : IWalletService
             ensureSufficientBalance: true);
     }
 
+    /// <summary>
+    /// Transfers funds from the sender to a validated receiver. The operation
+    /// is performed in a serializable database transaction and creates paired
+    /// debit/credit transaction records with a shared reference.
+    /// </summary>
+    /// <param name="senderUserId">The id of the authenticated sender.</param>
+    /// <param name="request">Transfer details containing receiver id and amount.</param>
+    /// <returns>The sender's updated wallet response.</returns>
     public async Task<WalletResponse> TransferAsync(int senderUserId, TransferRequest request)
     {
         TransferRequestValidator.Validate(request);
@@ -194,6 +231,9 @@ public class WalletService : IWalletService
         return MapToResponse(senderWallet);
     }
 
+    /// <summary>
+    /// Retrieves paginated transaction history for the user's wallet with optional filters.
+    /// </summary>
     public async Task<PagedResponse<TransactionResponse>> GetTransactionsAsync(
         int userId,
         PaginationRequest request,

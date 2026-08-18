@@ -12,6 +12,9 @@ namespace PaySphere.WalletService.Extensions;
 
 public static class ServiceCollectionExtensions
 {
+    // Extension methods to configure service-level concerns such as logging,
+    // JWT authentication, external HTTP clients and Swagger. These are called
+    // during application startup in Program.cs to keep Program.cs concise.
     public static IServiceCollection AddSerilogConfiguration(
         this IServiceCollection services,
         IConfiguration configuration)

@@ -4,6 +4,10 @@ using PaySphere.WalletService.Exceptions;
 
 namespace PaySphere.WalletService.Validators;
 
+/// <summary>
+/// Validates TransferRequest payloads ensuring receiver id, description length
+/// and amount precision rules. Throws domain exceptions for invalid input.
+/// </summary>
 internal static class TransferRequestValidator
 {
     public static void Validate(TransferRequest request)

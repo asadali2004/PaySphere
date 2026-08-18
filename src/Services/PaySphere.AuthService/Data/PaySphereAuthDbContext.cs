@@ -3,6 +3,10 @@ using PaySphere.AuthService.Entities;
 
 namespace PaySphere.AuthService.Data;
 
+/// <summary>
+/// EF Core DbContext for the AuthService containing Users and Roles sets.
+/// Model configurations are applied from the assembly to centralize mapping logic.
+/// </summary>
 public class PaySphereAuthDbContext : DbContext
 {
     public PaySphereAuthDbContext(DbContextOptions<PaySphereAuthDbContext> options)

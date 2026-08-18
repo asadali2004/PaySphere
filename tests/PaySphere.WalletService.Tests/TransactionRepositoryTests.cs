@@ -14,6 +14,10 @@ using System.Threading.Tasks;
 namespace PaySphere.WalletService.Tests
 {
     [TestFixture]
+    /// <summary>
+    /// Contains integration-style tests for TransactionRepository covering
+    /// filtering, sorting and pagination behavior using an in-memory SQLite DB.
+    /// </summary>
     public class TransactionRepositoryTests
     {
         private SqliteConnection _connection = null!;

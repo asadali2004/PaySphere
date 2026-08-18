@@ -5,6 +5,11 @@ using PaySphere.BuildingBlocks.Constants;
 
 namespace PaySphere.AuthService.Data.Seed;
 
+/// <summary>
+/// Seeds initial data required by the AuthService such as roles and an admin user.
+/// This method is safe to run at startup in development and idempotent by design.
+/// It performs EF Core migrations before seeding.
+/// </summary>
 public static class DataSeeder
 {
     public static async Task SeedAsync(IServiceProvider serviceProvider)
