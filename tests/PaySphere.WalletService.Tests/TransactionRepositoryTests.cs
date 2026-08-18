@@ -24,6 +24,10 @@ namespace PaySphere.WalletService.Tests
         private WalletDbContext _dbContext = null!;
         private TransactionRepository _repository = null!;
 
+        /// <summary>
+        /// Sets up an in-memory SQLite database and initializes the WalletDbContext and TransactionRepository before each test.
+        /// </summary>
+        /// <returns></returns>
         [SetUp]
         public async Task SetUp()
         {
@@ -40,6 +44,10 @@ namespace PaySphere.WalletService.Tests
             _repository = new TransactionRepository(_dbContext);
         }
 
+        /// <summary>
+        /// Disposes of the WalletDbContext and closes the in-memory SQLite connection after each test.
+        /// </summary>
+        /// <returns></returns>
         [TearDown]
         public async Task TearDown()
         {
@@ -47,6 +55,11 @@ namespace PaySphere.WalletService.Tests
             await _connection.DisposeAsync();
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method correctly filters transactions
+        /// based on a search term that matches either the Reference or Description fields.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_SearchMatchesReferenceOrDescription()
         {
@@ -67,6 +80,10 @@ namespace PaySphere.WalletService.Tests
             items.Single().Reference.Should().Be("PAY-123");
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method correctly filters transactions based on the specified TransactionType.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_TypeFilterWorks()
         {
@@ -87,6 +104,10 @@ namespace PaySphere.WalletService.Tests
             items.Single().Type.Should().Be(TransactionType.TopUp);
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method correctly filters transactions based on a specified date range.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_DateRangeFilterWorks()
         {
@@ -113,6 +134,11 @@ namespace PaySphere.WalletService.Tests
             items.Select(x => x.Reference).Should().Contain(new[] { "MID", "REC" });
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method correctly sorts
+        /// transactions by Amount in both ascending and descending order.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_SortByAmountWorks()
         {
@@ -134,6 +160,10 @@ namespace PaySphere.WalletService.Tests
             descItems.Select(x => x.Amount).Should().BeInDescendingOrder();
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method correctly sorts
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_SortByCreatedAtWorks()
         {
@@ -159,6 +189,10 @@ namespace PaySphere.WalletService.Tests
             desc.Select(x => x.CreatedAt).Should().BeInDescendingOrder();
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method correctly implements pagination,
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_PaginationWorks()
         {
@@ -181,6 +215,10 @@ namespace PaySphere.WalletService.Tests
             pageItems.Should().HaveCount(2);
         }
 
+        /// <summary>
+        /// Tests that the GetByWalletIdWithFiltersAsync method defaults to sorting by CreatedAt in descending order
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetByWalletIdWithFiltersAsync_UnsupportedSortByDefaultsToCreatedAtDesc()
         {

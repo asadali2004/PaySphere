@@ -12,8 +12,18 @@ using System.IO;
 
 namespace PaySphere.AuthService.Extensions;
 
+/// <summary>
+/// Provides extension methods for IServiceCollection to configure services, authentication,
+/// logging, database context, repositories, Swagger documentation, and application-level services.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Configures Serilog logging for the application, reading settings from the provided configuration.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
     public static IServiceCollection AddSerilogConfiguration(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -36,6 +46,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Configures JWT authentication for the application using settings from the provided configuration.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
     public static IServiceCollection AddJwtAuthentication(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -74,6 +90,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Configures the database context for the application using SQL Server
+    /// and the connection string from the provided configuration.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
     public static IServiceCollection AddDatabase(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -86,6 +109,11 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Configures the repositories for the application, registering them with the dependency injection container.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <returns></returns>
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -95,6 +123,11 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Configures Swagger documentation for the application, including security definitions for JWT Bearer tokens.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <returns></returns>
     public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
@@ -135,6 +168,11 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    ///     
+    /// </summary>
+    /// <param name="services"></param>
+    /// <returns></returns>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Application-level services

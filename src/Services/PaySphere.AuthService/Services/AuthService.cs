@@ -10,6 +10,10 @@ using PaySphere.BuildingBlocks.Exceptions;
 
 namespace PaySphere.AuthService.Services;
 
+/// <summary>
+/// Service responsible for handling authentication-related operations such as user registration,
+/// login, profile retrieval, and password changes.
+/// </summary>
 public class AuthService : IAuthService
 {
     private readonly IGenericRepository<User> _userRepoGeneric;
@@ -17,6 +21,14 @@ public class AuthService : IAuthService
     private readonly IRoleRepository _roleRepository;
     private readonly IJwtTokenService _jwtTokenService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthService"/> 
+    /// class with the specified repositories and JWT token service.
+    /// </summary>
+    /// <param name="userRepoGeneric"></param>
+    /// <param name="userRepository"></param>
+    /// <param name="roleRepository"></param>
+    /// <param name="jwtTokenService"></param>
     public AuthService(
         IGenericRepository<User> userRepoGeneric,
         IUserRepository userRepository,
@@ -28,6 +40,14 @@ public class AuthService : IAuthService
         _roleRepository = roleRepository;
         _jwtTokenService = jwtTokenService;
     }
+
+    /// <summary>
+    /// Registers a new user with the provided registration details. Validates the request,
+    /// checks for duplicate email and phone number, assigns a default role, and saves the user to the database.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    /// <exception cref="BaseException"></exception>
 
     public async Task<UserResponse> RegisterAsync(RegisterRequest request)
     {
@@ -67,6 +87,13 @@ public class AuthService : IAuthService
         };
     }
 
+
+    /// <summary>
+    /// Authenticates a user with the provided login credentials. Validates the request,
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    /// <exception cref="BaseException"></exception>
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         LoginRequestValidator.Validate(request);
@@ -88,6 +115,13 @@ public class AuthService : IAuthService
         };
     }
 
+
+    /// <summary>
+    /// Retrieves the profile information of a user by their user ID. If the user is not found, an exception is thrown.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    /// <exception cref="BaseException"></exception>
     public async Task<UserResponse> GetProfileAsync(int userId)
     {
         var user = await _userRepository.GetUserWithRoleAsync(userId);
@@ -105,6 +139,14 @@ public class AuthService : IAuthService
         };
     }
 
+
+    /// <summary>
+    /// Changes the password of a user. Validates the request, checks if the current password is correct,
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    /// <exception cref="BaseException"></exception>
     public async Task ChangePasswordAsync(int userId, ChangePasswordRequest request)
     {
         ChangePasswordRequestValidator.Validate(request);
@@ -123,6 +165,12 @@ public class AuthService : IAuthService
         await _userRepoGeneric.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Validates if a user exists and is active based on the provided user ID.
+    /// Returns an InternalUserValidationResponse indicating the user's existence and active status.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     public async Task<InternalUserValidationResponse> GetInternalUserValidationAsync(int userId)
     {
         var user = await _userRepoGeneric.GetByIdAsync(userId);

@@ -31,6 +31,10 @@ public class WalletServiceTests
     private Mock<IAuthServiceClient> _authServiceClientMock = null!;
     private WalletServiceImpl _walletService = null!;
 
+    /// <summary>
+    /// Sets up the in-memory database, mocks, and WalletService instance before each test.
+    /// </summary>
+    /// <returns></returns>
     [SetUp]
     public async Task SetUp()
     {
@@ -54,6 +58,10 @@ public class WalletServiceTests
             _dbContext);
     }
 
+    /// <summary>
+    /// Disposes the in-memory database and mocks after each test to ensure isolation.
+    /// </summary>
+    /// <returns></returns>
     [TearDown]
     public async Task TearDown()
     {
@@ -61,6 +69,10 @@ public class WalletServiceTests
         await _connection.DisposeAsync();
     }
 
+    /// <summary>
+    /// Tests that creating a wallet for a user who does not already have one succeeds and returns the expected wallet details.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task CreateWalletAsync_ShouldCreateWalletSuccessfully()
     {
@@ -89,6 +101,12 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+
+    /// <summary>
+    /// Tests that attempting to create a wallet for a user who already has one throws
+    /// a WalletAlreadyExistsException and does not call AddAsync or SaveChangesAsync.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task CreateWalletAsync_ShouldRejectDuplicateWallet()
     {
@@ -106,6 +124,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that retrieving a wallet for an existing user returns the correct wallet details.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task GetWalletAsync_ShouldReturnWallet()
     {
@@ -124,6 +146,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that attempting to retrieve a wallet for a user who does not have one throws
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task GetWalletAsync_ShouldThrowWhenWalletNotFound()
     {
@@ -139,6 +165,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that retrieving the balance for an active wallet returns the correct balance.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task GetBalanceAsync_ShouldReturnCurrentBalance()
     {
@@ -154,6 +184,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that attempting to retrieve the balance for an inactive wallet throws a WalletNotActiveException.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task GetBalanceAsync_ShouldRejectInactiveWallet()
     {
@@ -170,6 +204,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that topping up an active wallet increases the balance and creates a corresponding transaction record.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TopUpAsync_ShouldIncreaseBalanceAndCreateTransaction()
     {
@@ -202,6 +240,10 @@ public class WalletServiceTests
         _transactionRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that withdrawing from an active wallet decreases the balance and creates a corresponding transaction record.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task WithdrawAsync_ShouldDecreaseBalanceAndCreateTransaction()
     {
@@ -233,6 +275,10 @@ public class WalletServiceTests
         _transactionRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that topping up with an invalid amount (e.g., zero) throws an InvalidTransactionAmountException.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TopUpAsync_ShouldRejectInvalidAmount()
     {
@@ -242,6 +288,10 @@ public class WalletServiceTests
             .WithMessage("Invalid transaction amount.");
     }
 
+    /// <summary>
+    /// Tests that withdrawing with an amount that has more than two decimal places throws an InvalidTransactionAmountException.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task WithdrawAsync_ShouldRejectAmountWithMoreThanTwoDecimals()
     {
@@ -251,6 +301,11 @@ public class WalletServiceTests
             .WithMessage("Invalid transaction amount.");
     }
 
+    /// <summary>
+    /// Tests that withdrawing an amount greater than the wallet's balance throws an
+    /// InsufficientBalanceException and does not update the wallet or create a transaction.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task WithdrawAsync_ShouldRejectInsufficientBalance()
     {
@@ -270,6 +325,11 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that topping up an inactive wallet throws a WalletNotActiveException and
+    /// does not update the wallet or create a transaction.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TopUpAsync_ShouldRejectInactiveWallet()
     {
@@ -286,6 +346,11 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that transferring funds from one active wallet to another moves the funds correctly
+    /// and creates both debit and credit transactions with matching references.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldMoveFundsAndCreateDebitAndCreditTransactions()
     {
@@ -338,6 +403,11 @@ public class WalletServiceTests
         _transactionRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    /// Tests that attempting to transfer funds to oneself throws
+    /// a BaseException and does not call the receiver validation or update any wallets.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldRejectSelfTransfer()
     {
@@ -354,6 +424,10 @@ public class WalletServiceTests
         _authServiceClientMock.Verify(x => x.ValidateReceiverAsync(It.IsAny<int>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that attempting to transfer funds to a non-existent or inactive receiver throws
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldRejectInvalidReceiver()
     {
@@ -378,6 +452,10 @@ public class WalletServiceTests
         _authServiceClientMock.VerifyAll();
     }
 
+    /// <summary>
+    ///     Tests that attempting to transfer funds to a receiver who does not have a wallet throws
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldRejectReceiverWithoutWallet()
     {
@@ -409,6 +487,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    ///   Tests that attempting to transfer an amount greater than the sender's wallet balance throws
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldRejectInsufficientBalance()
     {
@@ -443,6 +525,10 @@ public class WalletServiceTests
         _authServiceClientMock.VerifyAll();
     }
 
+    /// <summary>
+    ///   Tests that attempting to transfer funds from an inactive sender wallet throws
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldRejectInactiveSender()
     {
@@ -473,6 +559,11 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    ///  Tests that if the credit transaction fails during a transfer, the entire operation is rolled 
+    ///  back and no changes are persisted to either wallet or transaction records.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task TransferAsync_ShouldRollbackWhenCreditTransactionFails()
     {
@@ -512,6 +603,10 @@ public class WalletServiceTests
         _walletRepositoryMock.VerifyAll();
     }
 
+    /// <summary>
+    ///  Tests that retrieving a paginated list of transactions for a wallet returns the correct page of transaction history.
+    /// </summary>
+    /// <returns></returns>
     [Test]
     public async Task GetTransactionsAsync_ShouldReturnPagedHistory()
     {

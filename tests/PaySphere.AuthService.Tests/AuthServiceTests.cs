@@ -17,6 +17,9 @@ using PaySphere.BuildingBlocks.Base;
 
 namespace PaySphere.AuthService.Tests
 {
+    /// <summary>
+    /// Unit tests for the AuthService class, covering registration, login, profile retrieval, and password change scenarios.
+    /// </summary>
     [TestFixture]
     public class AuthServiceTests
     {
@@ -42,6 +45,10 @@ namespace PaySphere.AuthService.Tests
                 _jwtMock.Object);
         }
 
+        /// <summary>
+        /// Tests the RegisterAsync method of AuthService with valid registration data.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task Register_WithValidData_ShouldCreateUser()
         {
@@ -72,6 +79,9 @@ namespace PaySphere.AuthService.Tests
             Assert.That(added.PasswordHash, Is.Not.EqualTo(request.Password));
         }
 
+        /// <summary>
+        /// Tests the RegisterAsync method of AuthService when the email already exists in the system, expecting a failure.
+        /// </summary>
         [Test]
         public void Register_WhenEmailExists_ShouldFail()
         {
@@ -82,6 +92,9 @@ namespace PaySphere.AuthService.Tests
             Assert.ThrowsAsync<BaseException>(async () => await _authService.RegisterAsync(request));
         }
 
+        /// <summary>
+        /// Tests the RegisterAsync method of AuthService when the phone number already exists in the system, expecting a failure.
+        /// </summary>
         [Test]
         public void Register_WhenPhoneExists_ShouldFail()
         {
@@ -93,6 +106,10 @@ namespace PaySphere.AuthService.Tests
             Assert.ThrowsAsync<BaseException>(async () => await _authService.RegisterAsync(request));
         }
 
+        /// <summary>
+        /// Tests that the RegisterAsync method hashes the password before storing it in the database.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task Register_ShouldHashPassword()
         {
@@ -118,6 +135,10 @@ namespace PaySphere.AuthService.Tests
             Assert.That(PasswordHasher.VerifyPassword(request.Password, added!.PasswordHash), Is.True);
         }
 
+        /// <summary>
+        /// Tests that the RegisterAsync method assigns the default "User" role to newly registered users.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task Register_ShouldAssignUserRole()
         {
@@ -143,6 +164,11 @@ namespace PaySphere.AuthService.Tests
             Assert.That(added!.RoleId, Is.EqualTo(2));
         }
 
+
+        /// <summary>
+        /// Tests the LoginAsync method of AuthService with valid credentials, expecting a successful login and token generation.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task Login_WithValidCredentials_ShouldReturnToken()
         {
@@ -160,6 +186,9 @@ namespace PaySphere.AuthService.Tests
             Assert.That(result.Token, Is.Not.Empty);
         }
 
+        /// <summary>
+        /// Tests the LoginAsync method of AuthService when the user does not exist, expecting a failure and an exception to be thrown.
+        /// </summary>
         [Test]
         public void Login_WhenUserDoesNotExist_ShouldFail()
         {
@@ -168,6 +197,10 @@ namespace PaySphere.AuthService.Tests
             Assert.ThrowsAsync<BaseException>(async () => await _authService.LoginAsync(new LoginRequest { Email = "no@x.com", Password = "p" }));
         }
 
+        /// <summary>
+        /// Tests the LoginAsync method of AuthService when the provided password is incorrect,
+        /// expecting a failure and an exception to be thrown.
+        /// </summary>
         [Test]
         public void Login_WhenPasswordIsIncorrect_ShouldFail()
         {
@@ -179,6 +212,9 @@ namespace PaySphere.AuthService.Tests
             Assert.ThrowsAsync<BaseException>(async () => await _authService.LoginAsync(new LoginRequest { Email = user.Email, Password = "wrong" }));
         }
 
+        /// <summary>
+        /// Tests the LoginAsync method of AuthService when the user account is inactive,
+        /// </summary>
         [Test]
         public void Login_WhenUserIsInactive_ShouldFail()
         {
@@ -190,6 +226,10 @@ namespace PaySphere.AuthService.Tests
             Assert.ThrowsAsync<BaseException>(async () => await _authService.LoginAsync(new LoginRequest { Email = user.Email, Password = "pass" }));
         }
 
+        /// <summary>
+        /// Tests the GetProfileAsync method of AuthService to ensure it returns the current user's profile information correctly.
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task GetProfile_ShouldReturnCurrentUser()
         {
@@ -204,6 +244,10 @@ namespace PaySphere.AuthService.Tests
             Assert.That(result.Role, Is.EqualTo("User"));
         }
 
+        /// <summary>
+        /// Tests the ChangePasswordAsync method of AuthService with the correct current password,
+        /// </summary>
+        /// <returns></returns>
         [Test]
         public async Task ChangePassword_WithCorrectCurrentPassword_ShouldUpdate()
         {
@@ -220,6 +264,10 @@ namespace PaySphere.AuthService.Tests
             _genericRepoMock.Verify(x => x.Update(It.Is<User>(u => u.PasswordHash != null && u.PasswordHash != oldHash)), Times.Once);
         }
 
+        /// <summary>
+        /// Tests the ChangePasswordAsync method of AuthService with an incorrect current password,
+        /// expecting a failure and an exception to be thrown.
+        /// </summary>
         [Test]
         public void ChangePassword_WithIncorrectCurrentPassword_ShouldFail()
         {
