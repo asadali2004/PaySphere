@@ -1,4 +1,4 @@
-# PaySphere - Complete Documentation
+# PaySphere
 
 A microservices-based digital wallet and payment platform built with .NET 8, featuring secure user authentication, wallet management, and peer-to-peer transfers.
 
