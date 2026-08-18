@@ -35,10 +35,4 @@
     <ProjectReference Include="..\..\BuildingBlocks\PaySphere.BuildingBlocks\PaySphere.BuildingBlocks.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Exceptions\" />
-    <Folder Include="Constants\" />
-    <Folder Include="Mappings\" />
-  </ItemGroup>
-
 </Project>

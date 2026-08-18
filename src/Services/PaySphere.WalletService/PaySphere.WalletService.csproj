@@ -28,10 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Constants\" />
     <Folder Include="Data\Seed\" />
-    <Folder Include="Helpers\" />
-    <Folder Include="Mappings\" />
   </ItemGroup>
 
 </Project>
