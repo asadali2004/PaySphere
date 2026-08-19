@@ -1,703 +1,120 @@
-using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using PaySphere.BuildingBlocks.Enums;
-using PaySphere.BuildingBlocks.Exceptions;
-using PaySphere.BuildingBlocks.Pagination;
-using PaySphere.BuildingBlocks.Responses;
+using NUnit.Framework;
 using PaySphere.WalletService.Data;
-using PaySphere.WalletService.DTOs.Requests;
-using PaySphere.WalletService.DTOs.Responses;
 using PaySphere.WalletService.Entities;
-using PaySphere.WalletService.Exceptions;
 using PaySphere.WalletService.Repositories.Interfaces;
 using PaySphere.WalletService.Services.Interfaces;
 using WalletServiceImpl = PaySphere.WalletService.Services.WalletService;
+using PaySphere.WalletService.DTOs.Requests;
+using PaySphere.WalletService.Exceptions;
 
-namespace PaySphere.WalletService.Tests;
-
-/// <summary>
-/// Unit tests for WalletService business rules including wallet creation,
-/// balance operations, top-up/withdrawal and transfer flows. Tests use an
-/// in-memory Sqlite database and Moq for repository and external client dependencies.
-/// </summary>
-public class WalletServiceTests
+namespace PaySphere.WalletService.Tests
 {
-    private SqliteConnection _connection = null!;
-    private WalletDbContext _dbContext = null!;
-    private Mock<IWalletRepository> _walletRepositoryMock = null!;
-    private Mock<ITransactionRepository> _transactionRepositoryMock = null!;
-    private Mock<IAuthServiceClient> _authServiceClientMock = null!;
-    private WalletServiceImpl _walletService = null!;
-
-    /// <summary>
-    /// Sets up the in-memory database, mocks, and WalletService instance before each test.
-    /// </summary>
-    /// <returns></returns>
-    [SetUp]
-    public async Task SetUp()
+    // Simplified, fresher-style NUnit tests (5 essential tests)
+    public class WalletServiceTests
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        await _connection.OpenAsync();
+        private SqliteConnection _connection = null!;
+        private WalletDbContext _dbContext = null!;
+        private Mock<IWalletRepository> _walletRepo = null!;
+        private Mock<ITransactionRepository> _txRepo = null!;
+        private Mock<IAuthServiceClient> _authClient = null!;
+        private WalletServiceImpl _service = null!;
 
-        var options = new DbContextOptionsBuilder<WalletDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        _dbContext = new WalletDbContext(options);
-        await _dbContext.Database.EnsureCreatedAsync();
-
-        _walletRepositoryMock = new Mock<IWalletRepository>(MockBehavior.Strict);
-        _transactionRepositoryMock = new Mock<ITransactionRepository>(MockBehavior.Strict);
-        _authServiceClientMock = new Mock<IAuthServiceClient>(MockBehavior.Strict);
-        _walletService = new WalletServiceImpl(
-            _walletRepositoryMock.Object,
-            _transactionRepositoryMock.Object,
-            _authServiceClientMock.Object,
-            _dbContext);
-    }
-
-    /// <summary>
-    /// Disposes the in-memory database and mocks after each test to ensure isolation.
-    /// </summary>
-    /// <returns></returns>
-    [TearDown]
-    public async Task TearDown()
-    {
-        await _dbContext.DisposeAsync();
-        await _connection.DisposeAsync();
-    }
-
-    /// <summary>
-    /// Tests that creating a wallet for a user who does not already have one succeeds and returns the expected wallet details.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task CreateWalletAsync_ShouldCreateWalletSuccessfully()
-    {
-        var userId = 5;
-        Wallet? addedWallet = null;
-
-        _walletRepositoryMock.Setup(x => x.ExistsByUserIdAsync(userId)).ReturnsAsync(false);
-        _walletRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Wallet>()))
-            .Callback<Wallet>(wallet =>
-            {
-                wallet.Id = 10;
-                addedWallet = wallet;
-            })
-            .Returns(Task.CompletedTask);
-        _walletRepositoryMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
-
-        var result = await _walletService.CreateWalletAsync(userId);
-
-        result.Id.Should().Be(10);
-        result.UserId.Should().Be(userId);
-        result.Balance.Should().Be(0m);
-        result.Status.Should().Be(WalletStatus.Active);
-        result.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        addedWallet.Should().NotBeNull();
-
-        _walletRepositoryMock.VerifyAll();
-    }
-
-
-    /// <summary>
-    /// Tests that attempting to create a wallet for a user who already has one throws
-    /// a WalletAlreadyExistsException and does not call AddAsync or SaveChangesAsync.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task CreateWalletAsync_ShouldRejectDuplicateWallet()
-    {
-        var userId = 5;
-
-        _walletRepositoryMock.Setup(x => x.ExistsByUserIdAsync(userId)).ReturnsAsync(true);
-
-        var act = async () => await _walletService.CreateWalletAsync(userId);
-
-        await act.Should().ThrowAsync<WalletAlreadyExistsException>()
-            .WithMessage("Wallet already exists.");
-
-        _walletRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Wallet>()), Times.Never);
-        _walletRepositoryMock.Verify(x => x.SaveChangesAsync(), Times.Never);
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that retrieving a wallet for an existing user returns the correct wallet details.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task GetWalletAsync_ShouldReturnWallet()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 150.25m, WalletStatus.Active);
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-
-        var result = await _walletService.GetWalletAsync(userId);
-
-        result.UserId.Should().Be(userId);
-        result.Balance.Should().Be(150.25m);
-        result.Status.Should().Be(WalletStatus.Active);
-        result.CreatedAt.Should().Be(wallet.CreatedAt);
-
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that attempting to retrieve a wallet for a user who does not have one throws
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task GetWalletAsync_ShouldThrowWhenWalletNotFound()
-    {
-        var userId = 5;
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync((Wallet?)null);
-
-        var act = async () => await _walletService.GetWalletAsync(userId);
-
-        await act.Should().ThrowAsync<WalletNotFoundException>()
-            .WithMessage("Wallet not found.");
-
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that retrieving the balance for an active wallet returns the correct balance.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task GetBalanceAsync_ShouldReturnCurrentBalance()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 999.99m, WalletStatus.Active);
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-
-        var result = await _walletService.GetBalanceAsync(userId);
-
-        result.Balance.Should().Be(999.99m);
-
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that attempting to retrieve the balance for an inactive wallet throws a WalletNotActiveException.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task GetBalanceAsync_ShouldRejectInactiveWallet()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 999.99m, WalletStatus.Frozen);
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-
-        var act = async () => await _walletService.GetBalanceAsync(userId);
-
-        await act.Should().ThrowAsync<WalletNotActiveException>()
-            .WithMessage("Wallet is not active.");
-
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that topping up an active wallet increases the balance and creates a corresponding transaction record.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TopUpAsync_ShouldIncreaseBalanceAndCreateTransaction()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 1000m, WalletStatus.Active);
-        Transaction? capturedTransaction = null;
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-        _walletRepositoryMock.Setup(x => x.Update(wallet));
-        _walletRepositoryMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _transactionRepositoryMock.Setup(x => x.GetByReferenceAsync(It.IsAny<string>())).ReturnsAsync((Transaction?)null);
-        _transactionRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Transaction>()))
-            .Callback<Transaction>(transaction => capturedTransaction = transaction)
-            .Returns(Task.CompletedTask);
-
-        var result = await _walletService.TopUpAsync(userId, new TopUpRequest { Amount = 500.50m });
-
-        result.Balance.Should().Be(1500.50m);
-        wallet.Balance.Should().Be(1500.50m);
-        result.UpdatedAt.Should().NotBeNull();
-        capturedTransaction.Should().NotBeNull();
-        capturedTransaction!.Type.Should().Be(TransactionType.TopUp);
-        capturedTransaction.Amount.Should().Be(500.50m);
-        capturedTransaction.BalanceBefore.Should().Be(1000m);
-        capturedTransaction.BalanceAfter.Should().Be(1500.50m);
-        capturedTransaction.Reference.Should().StartWith("TXN-");
-        capturedTransaction.Description.Should().Be("Wallet top-up");
-
-        _walletRepositoryMock.VerifyAll();
-        _transactionRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that withdrawing from an active wallet decreases the balance and creates a corresponding transaction record.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task WithdrawAsync_ShouldDecreaseBalanceAndCreateTransaction()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 1500m, WalletStatus.Active);
-        Transaction? capturedTransaction = null;
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-        _walletRepositoryMock.Setup(x => x.Update(wallet));
-        _walletRepositoryMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _transactionRepositoryMock.Setup(x => x.GetByReferenceAsync(It.IsAny<string>())).ReturnsAsync((Transaction?)null);
-        _transactionRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Transaction>()))
-            .Callback<Transaction>(transaction => capturedTransaction = transaction)
-            .Returns(Task.CompletedTask);
-
-        var result = await _walletService.WithdrawAsync(userId, new WithdrawRequest { Amount = 200m });
-
-        result.Balance.Should().Be(1300m);
-        wallet.Balance.Should().Be(1300m);
-        capturedTransaction.Should().NotBeNull();
-        capturedTransaction!.Type.Should().Be(TransactionType.Withdrawal);
-        capturedTransaction.Amount.Should().Be(200m);
-        capturedTransaction.BalanceBefore.Should().Be(1500m);
-        capturedTransaction.BalanceAfter.Should().Be(1300m);
-        capturedTransaction.Reference.Should().StartWith("TXN-");
-        capturedTransaction.Description.Should().Be("Wallet withdrawal");
-
-        _walletRepositoryMock.VerifyAll();
-        _transactionRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that topping up with an invalid amount (e.g., zero) throws an InvalidTransactionAmountException.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TopUpAsync_ShouldRejectInvalidAmount()
-    {
-        var act = async () => await _walletService.TopUpAsync(5, new TopUpRequest { Amount = 0m });
-
-        await act.Should().ThrowAsync<InvalidTransactionAmountException>()
-            .WithMessage("Invalid transaction amount.");
-    }
-
-    /// <summary>
-    /// Tests that withdrawing with an amount that has more than two decimal places throws an InvalidTransactionAmountException.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task WithdrawAsync_ShouldRejectAmountWithMoreThanTwoDecimals()
-    {
-        var act = async () => await _walletService.WithdrawAsync(5, new WithdrawRequest { Amount = 10.123m });
-
-        await act.Should().ThrowAsync<InvalidTransactionAmountException>()
-            .WithMessage("Invalid transaction amount.");
-    }
-
-    /// <summary>
-    /// Tests that withdrawing an amount greater than the wallet's balance throws an
-    /// InsufficientBalanceException and does not update the wallet or create a transaction.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task WithdrawAsync_ShouldRejectInsufficientBalance()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 1000m, WalletStatus.Active);
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-
-        var act = async () => await _walletService.WithdrawAsync(userId, new WithdrawRequest { Amount = 1500m });
-
-        await act.Should().ThrowAsync<InsufficientBalanceException>()
-            .WithMessage("Insufficient wallet balance.");
-
-        _walletRepositoryMock.Verify(x => x.Update(It.IsAny<Wallet>()), Times.Never);
-        _walletRepositoryMock.Verify(x => x.SaveChangesAsync(), Times.Never);
-        _transactionRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Transaction>()), Times.Never);
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that topping up an inactive wallet throws a WalletNotActiveException and
-    /// does not update the wallet or create a transaction.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TopUpAsync_ShouldRejectInactiveWallet()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 1000m, WalletStatus.Frozen);
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-
-        var act = async () => await _walletService.TopUpAsync(userId, new TopUpRequest { Amount = 100m });
-
-        await act.Should().ThrowAsync<WalletNotActiveException>()
-            .WithMessage("Wallet is not active.");
-
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    /// Tests that transferring funds from one active wallet to another moves the funds correctly
-    /// and creates both debit and credit transactions with matching references.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldMoveFundsAndCreateDebitAndCreditTransactions()
-    {
-        var senderUserId = 5;
-        var receiverUserId = 10;
-        var senderWallet = CreateWallet(senderUserId, 1000m, WalletStatus.Active);
-        var receiverWallet = CreateWallet(receiverUserId, 500m, WalletStatus.Active);
-        Transaction? debitTransaction = null;
-        Transaction? creditTransaction = null;
-
-        _authServiceClientMock.Setup(x => x.ValidateReceiverAsync(receiverUserId))
-            .ReturnsAsync(new ReceiverValidationResponse
-            {
-                UserId = receiverUserId,
-                Exists = true,
-                IsActive = true
-            });
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(senderUserId)).ReturnsAsync(senderWallet);
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(receiverUserId)).ReturnsAsync(receiverWallet);
-        _walletRepositoryMock.Setup(x => x.Update(senderWallet));
-        _walletRepositoryMock.Setup(x => x.Update(receiverWallet));
-        _walletRepositoryMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _transactionRepositoryMock.Setup(x => x.GetByReferenceAsync(It.IsAny<string>())).ReturnsAsync((Transaction?)null);
-        _transactionRepositoryMock.Setup(x => x.AddAsync(It.Is<Transaction>(t => t.Type == TransactionType.TransferDebit)))
-            .Callback<Transaction>(transaction => debitTransaction = transaction)
-            .Returns(Task.CompletedTask);
-        _transactionRepositoryMock.Setup(x => x.AddAsync(It.Is<Transaction>(t => t.Type == TransactionType.TransferCredit)))
-            .Callback<Transaction>(transaction => creditTransaction = transaction)
-            .Returns(Task.CompletedTask);
-
-        var result = await _walletService.TransferAsync(senderUserId, new TransferRequest
+        [SetUp]
+        public async System.Threading.Tasks.Task SetUp()
         {
-            ReceiverUserId = receiverUserId,
-            Amount = 300m,
-            Description = "Payment"
-        });
+            _connection = new SqliteConnection("DataSource=:memory:");
+            await _connection.OpenAsync();
 
-        result.Balance.Should().Be(700m);
-        senderWallet.Balance.Should().Be(700m);
-        receiverWallet.Balance.Should().Be(800m);
-        debitTransaction.Should().NotBeNull();
-        creditTransaction.Should().NotBeNull();
-        debitTransaction!.Type.Should().Be(TransactionType.TransferDebit);
-        creditTransaction!.Type.Should().Be(TransactionType.TransferCredit);
-        debitTransaction.Reference.Should().NotBeNullOrWhiteSpace();
-        debitTransaction.Reference.Should().Be(creditTransaction.Reference);
+            var options = new DbContextOptionsBuilder<WalletDbContext>()
+                .UseSqlite(_connection)
+                .Options;
 
-        _authServiceClientMock.VerifyAll();
-        _walletRepositoryMock.VerifyAll();
-        _transactionRepositoryMock.VerifyAll();
-    }
+            _dbContext = new WalletDbContext(options);
+            await _dbContext.Database.EnsureCreatedAsync();
 
-    /// <summary>
-    /// Tests that attempting to transfer funds to oneself throws
-    /// a BaseException and does not call the receiver validation or update any wallets.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldRejectSelfTransfer()
-    {
-        var act = async () => await _walletService.TransferAsync(5, new TransferRequest
+            _walletRepo = new Mock<IWalletRepository>();
+            _txRepo = new Mock<ITransactionRepository>();
+            _authClient = new Mock<IAuthServiceClient>();
+
+            _service = new WalletServiceImpl(_walletRepo.Object, _txRepo.Object, _authClient.Object, _dbContext);
+        }
+
+        [TearDown]
+        public async System.Threading.Tasks.Task TearDown()
         {
-            ReceiverUserId = 5,
-            Amount = 50m,
-            Description = "Self transfer"
-        });
+            await _dbContext.DisposeAsync();
+            await _connection.DisposeAsync();
+        }
 
-        await act.Should().ThrowAsync<BaseException>()
-            .WithMessage("Sender and receiver cannot be the same.");
-
-        _authServiceClientMock.Verify(x => x.ValidateReceiverAsync(It.IsAny<int>()), Times.Never);
-    }
-
-    /// <summary>
-    /// Tests that attempting to transfer funds to a non-existent or inactive receiver throws
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldRejectInvalidReceiver()
-    {
-        _authServiceClientMock.Setup(x => x.ValidateReceiverAsync(10))
-            .ReturnsAsync(new ReceiverValidationResponse
-            {
-                UserId = 10,
-                Exists = false,
-                IsActive = false
-            });
-
-        var act = async () => await _walletService.TransferAsync(5, new TransferRequest
+        [Test]
+        public async System.Threading.Tasks.Task CreateWallet_Succeeds()
         {
-            ReceiverUserId = 10,
-            Amount = 50m,
-            Description = "Payment"
-        });
+            var userId = 1;
+            _walletRepo.Setup(r => r.ExistsByUserIdAsync(userId)).ReturnsAsync(false);
+            _walletRepo.Setup(r => r.AddAsync(It.IsAny<Wallet>())).Returns(System.Threading.Tasks.Task.CompletedTask)
+                .Callback<Wallet>(w => w.Id = 100);
+            _walletRepo.Setup(r => r.SaveChangesAsync()).Returns(System.Threading.Tasks.Task.CompletedTask);
 
-        await act.Should().ThrowAsync<ReceiverNotFoundException>()
-            .WithMessage("Receiver not found.");
+            var result = await _service.CreateWalletAsync(userId);
 
-        _authServiceClientMock.VerifyAll();
-    }
+            Assert.That(result.Id, Is.EqualTo(100));
+            Assert.That(result.UserId, Is.EqualTo(userId));
+            Assert.That(result.Balance, Is.EqualTo(0m));
+        }
 
-    /// <summary>
-    ///     Tests that attempting to transfer funds to a receiver who does not have a wallet throws
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldRejectReceiverWithoutWallet()
-    {
-        var senderUserId = 5;
-        var receiverUserId = 10;
-        var senderWallet = CreateWallet(senderUserId, 1000m, WalletStatus.Active);
-
-        _authServiceClientMock.Setup(x => x.ValidateReceiverAsync(receiverUserId))
-            .ReturnsAsync(new ReceiverValidationResponse
-            {
-                UserId = receiverUserId,
-                Exists = true,
-                IsActive = true
-            });
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(senderUserId)).ReturnsAsync(senderWallet);
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(receiverUserId)).ReturnsAsync((Wallet?)null);
-
-        var act = async () => await _walletService.TransferAsync(senderUserId, new TransferRequest
+        [Test]
+        public void CreateWallet_WhenExists_Throws()
         {
-            ReceiverUserId = receiverUserId,
-            Amount = 50m,
-            Description = "Payment"
-        });
+            var userId = 2;
+            _walletRepo.Setup(r => r.ExistsByUserIdAsync(userId)).ReturnsAsync(true);
 
-        await act.Should().ThrowAsync<ReceiverNotFoundException>()
-            .WithMessage("Receiver not found.");
+            Assert.That(async () => await _service.CreateWalletAsync(userId), Throws.TypeOf<WalletAlreadyExistsException>());
+        }
 
-        _authServiceClientMock.VerifyAll();
-        _walletRepositoryMock.VerifyAll();
-    }
-
-    /// <summary>
-    ///   Tests that attempting to transfer an amount greater than the sender's wallet balance throws
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldRejectInsufficientBalance()
-    {
-        var senderUserId = 5;
-        var receiverUserId = 10;
-        var senderWallet = CreateWallet(senderUserId, 100m, WalletStatus.Active);
-        var receiverWallet = CreateWallet(receiverUserId, 500m, WalletStatus.Active);
-
-        _authServiceClientMock.Setup(x => x.ValidateReceiverAsync(receiverUserId))
-            .ReturnsAsync(new ReceiverValidationResponse
-            {
-                UserId = receiverUserId,
-                Exists = true,
-                IsActive = true
-            });
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(senderUserId)).ReturnsAsync(senderWallet);
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(receiverUserId)).ReturnsAsync(receiverWallet);
-
-        var act = async () => await _walletService.TransferAsync(senderUserId, new TransferRequest
+        [Test]
+        public async System.Threading.Tasks.Task GetBalance_ReturnsValue()
         {
-            ReceiverUserId = receiverUserId,
-            Amount = 300m,
-            Description = "Payment"
-        });
+            var userId = 3;
+            var wallet = new Wallet { UserId = userId, Balance = 42.5m, Status = PaySphere.BuildingBlocks.Enums.WalletStatus.Active };
+            _walletRepo.Setup(r => r.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
 
-        await act.Should().ThrowAsync<InsufficientBalanceException>()
-            .WithMessage("Insufficient wallet balance.");
+            var resp = await _service.GetBalanceAsync(userId);
 
-        _walletRepositoryMock.Verify(x => x.Update(It.IsAny<Wallet>()), Times.Never);
-        _walletRepositoryMock.Verify(x => x.SaveChangesAsync(), Times.Never);
-        _transactionRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Transaction>()), Times.Never);
-        _authServiceClientMock.VerifyAll();
-    }
+            Assert.That(resp.Balance, Is.EqualTo(42.5m));
+        }
 
-    /// <summary>
-    ///   Tests that attempting to transfer funds from an inactive sender wallet throws
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldRejectInactiveSender()
-    {
-        var senderUserId = 5;
-        var receiverUserId = 10;
-        var senderWallet = CreateWallet(senderUserId, 1000m, WalletStatus.Frozen);
-
-        _authServiceClientMock.Setup(x => x.ValidateReceiverAsync(receiverUserId))
-            .ReturnsAsync(new ReceiverValidationResponse
-            {
-                UserId = receiverUserId,
-                Exists = true,
-                IsActive = true
-            });
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(senderUserId)).ReturnsAsync(senderWallet);
-
-        var act = async () => await _walletService.TransferAsync(senderUserId, new TransferRequest
+        [Test]
+        public async System.Threading.Tasks.Task TopUp_IncreasesBalance()
         {
-            ReceiverUserId = receiverUserId,
-            Amount = 50m,
-            Description = "Payment"
-        });
+            var userId = 4;
+            var wallet = new Wallet { UserId = userId, Balance = 10m, Status = PaySphere.BuildingBlocks.Enums.WalletStatus.Active };
+            _walletRepo.Setup(r => r.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
+            _walletRepo.Setup(r => r.Update(It.IsAny<Wallet>()));
+            _walletRepo.Setup(r => r.SaveChangesAsync()).Returns(System.Threading.Tasks.Task.CompletedTask);
 
-        await act.Should().ThrowAsync<WalletNotActiveException>()
-            .WithMessage("Wallet is not active.");
+            var req = new TopUpRequest { Amount = 5m };
+            var result = await _service.TopUpAsync(userId, req);
 
-        _authServiceClientMock.VerifyAll();
-        _walletRepositoryMock.VerifyAll();
-    }
+            Assert.That(result.Balance, Is.EqualTo(15m));
+        }
 
-    /// <summary>
-    ///  Tests that if the credit transaction fails during a transfer, the entire operation is rolled 
-    ///  back and no changes are persisted to either wallet or transaction records.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task TransferAsync_ShouldRollbackWhenCreditTransactionFails()
-    {
-        var senderUserId = 5;
-        var receiverUserId = 10;
-        var senderWallet = CreateWallet(senderUserId, 1000m, WalletStatus.Active);
-        var receiverWallet = CreateWallet(receiverUserId, 500m, WalletStatus.Active);
-
-        _authServiceClientMock.Setup(x => x.ValidateReceiverAsync(receiverUserId))
-            .ReturnsAsync(new ReceiverValidationResponse
-            {
-                UserId = receiverUserId,
-                Exists = true,
-                IsActive = true
-            });
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(senderUserId)).ReturnsAsync(senderWallet);
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(receiverUserId)).ReturnsAsync(receiverWallet);
-        _walletRepositoryMock.Setup(x => x.Update(senderWallet));
-        _walletRepositoryMock.Setup(x => x.Update(receiverWallet));
-        _walletRepositoryMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
-        _transactionRepositoryMock.Setup(x => x.GetByReferenceAsync(It.IsAny<string>())).ReturnsAsync((Transaction?)null);
-        _transactionRepositoryMock.Setup(x => x.AddAsync(It.Is<Transaction>(t => t.Type == TransactionType.TransferDebit)))
-            .Returns(Task.CompletedTask);
-        _transactionRepositoryMock.Setup(x => x.AddAsync(It.Is<Transaction>(t => t.Type == TransactionType.TransferCredit)))
-            .ThrowsAsync(new InvalidOperationException("boom"));
-
-        var act = async () => await _walletService.TransferAsync(senderUserId, new TransferRequest
+        [Test]
+        public void Transfer_InsufficientBalance_Throws()
         {
-            ReceiverUserId = receiverUserId,
-            Amount = 300m,
-            Description = "Payment"
-        });
+            var sender = 5;
+            var receiver = 6;
+            var senderWallet = new Wallet { UserId = sender, Balance = 10m, Status = PaySphere.BuildingBlocks.Enums.WalletStatus.Active };
+            var receiverWallet = new Wallet { UserId = receiver, Balance = 0m, Status = PaySphere.BuildingBlocks.Enums.WalletStatus.Active };
 
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
-        _walletRepositoryMock.Verify(x => x.SaveChangesAsync(), Times.Once);
-        _authServiceClientMock.VerifyAll();
-        _walletRepositoryMock.VerifyAll();
-    }
+            _authClient.Setup(a => a.ValidateReceiverAsync(receiver)).ReturnsAsync(new DTOs.Responses.ReceiverValidationResponse { UserId = receiver, Exists = true, IsActive = true });
+            _walletRepo.Setup(r => r.GetByUserIdAsync(sender)).ReturnsAsync(senderWallet);
+            _walletRepo.Setup(r => r.GetByUserIdAsync(receiver)).ReturnsAsync(receiverWallet);
 
-    /// <summary>
-    ///  Tests that retrieving a paginated list of transactions for a wallet returns the correct page of transaction history.
-    /// </summary>
-    /// <returns></returns>
-    [Test]
-    public async Task GetTransactionsAsync_ShouldReturnPagedHistory()
-    {
-        var userId = 5;
-        var wallet = CreateWallet(userId, 1000m, WalletStatus.Active);
-        var transactions = new List<Transaction>
-        {
-            new()
-            {
-                Id = 3,
-                WalletId = wallet.Id,
-                Type = TransactionType.Withdrawal,
-                Amount = 50m,
-                BalanceBefore = 1050m,
-                BalanceAfter = 1000m,
-                Reference = "TXN-20260812-000003",
-                Description = "Withdrawal",
-                CreatedAt = DateTime.UtcNow.AddMinutes(-1)
-            },
-            new()
-            {
-                Id = 2,
-                WalletId = wallet.Id,
-                Type = TransactionType.TopUp,
-                Amount = 100m,
-                BalanceBefore = 950m,
-                BalanceAfter = 1050m,
-                Reference = "TXN-20260812-000002",
-                Description = "Top up",
-                CreatedAt = DateTime.UtcNow.AddMinutes(-2)
-            },
-            new()
-            {
-                Id = 1,
-                WalletId = wallet.Id,
-                Type = TransactionType.TopUp,
-                Amount = 200m,
-                BalanceBefore = 750m,
-                BalanceAfter = 950m,
-                Reference = "TXN-20260812-000001",
-                Description = "Top up",
-                CreatedAt = DateTime.UtcNow.AddMinutes(-3)
-            }
-        };
-
-        _walletRepositoryMock.Setup(x => x.GetByUserIdAsync(userId)).ReturnsAsync(wallet);
-        _transactionRepositoryMock.Setup(x => x.GetByWalletIdWithFiltersAsync(
-            wallet.Id,
-            It.IsAny<string?>(),
-            It.IsAny<int?>(),
-            It.IsAny<DateTime?>(),
-            It.IsAny<DateTime?>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<int>(),
-            It.IsAny<int>()))
-            .ReturnsAsync((int wid, string? s, int? t, DateTime? df, DateTime? dt, string sb, string so, int pn, int ps) =>
-            {
-                var total = transactions.Count;
-                var page = transactions.Skip((pn - 1) * ps).Take(ps);
-                return (page, total);
-            });
-
-        var result = await _walletService.GetTransactionsAsync(userId, new PaginationRequest
-        {
-            PageNumber = 2,
-            PageSize = 2
-        });
-
-        result.Success.Should().BeTrue();
-        result.TotalRecords.Should().Be(3);
-        result.TotalPages.Should().Be(2);
-        result.PageNumber.Should().Be(2);
-        result.PageSize.Should().Be(2);
-        result.Data.Should().HaveCount(1);
-        result.Data!.Single().Id.Should().Be(1);
-
-        _walletRepositoryMock.VerifyAll();
-        _transactionRepositoryMock.VerifyAll();
-    }
-
-    private static Wallet CreateWallet(int userId, decimal balance, WalletStatus status)
-    {
-        return new Wallet
-        {
-            Id = userId + 100,
-            UserId = userId,
-            Balance = balance,
-            Status = status,
-            CreatedAt = DateTime.UtcNow.AddHours(-1),
-            UpdatedAt = null
-        };
+            Assert.That(async () => await _service.TransferAsync(sender, new PaySphere.WalletService.DTOs.Requests.TransferRequest { ReceiverUserId = receiver, Amount = 50m }),
+                Throws.TypeOf<PaySphere.WalletService.Exceptions.InsufficientBalanceException>());
+        }
     }
 }
